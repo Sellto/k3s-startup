@@ -141,7 +141,7 @@ After=network.target
 [Service]
 ExecStartPre=-/sbin/modprobe br_netfilter
 ExecStartPre=-/sbin/modprobe overlay
-ExecStartPre=sleep 20
+ExecStartPre=/bin/sleep 20
 ExecStart=/usr/local/bin/k3s server --disable-agent
 KillMode=process
 Delegate=yes
