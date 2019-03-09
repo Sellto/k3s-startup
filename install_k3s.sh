@@ -116,8 +116,10 @@ EOF
     fi
 
     chmod 755 $TMPBIN
-    info Installing k3s to /usr/local/bin/k3s
 
+
+
+    info Installing k3s to /usr/local/bin/k3s
     $SUDO chown root:root $TMPBIN
     $SUDO mv -f $TMPBIN /usr/local/bin/k3s
 
@@ -131,8 +133,38 @@ EOF
         $SUDO ln -s k3s /usr/local/bin/crictl
     fi
 
+    info Creating configuration file
+
+    if [$1 == "agent"]
+    $SUDO mkdir -p /etc/k3s/
+    $SUDO tee /etc/k3s/agent-conf.yml >/dev/null <<EOF
+token:              #Token to use for authentication [$K3S_TOKEN]
+server:             #Server to connect to [$K3S_URL]
+data-dir:           #Folder to hold state (default: "/var/lib/rancher/k3s")
+docker:     "no"    #Use docker instead of containerd
+no-flannel: "no"    #Disable embedded flannel
+cluster-secret :    #Shared secret used to bootstrap a cluster [$K3S_CLUSTER_SECRET]
+node-name :         #Node name [$K3S_NODE_NAME]
+node-ip:            #IP address to advertise for node
+EOF
+    fi
+    if [$1 == "server"]
+    $SUDO mkdir -p /etc/k3s/
+    $SUDO tee /etc/k3s/server-conf.yml >/dev/null <<EOF
+token:              #Token to use for authentication [$K3S_TOKEN]
+server:             #Server to connect to [$K3S_URL]
+data-dir:           #Folder to hold state (default: "/var/lib/rancher/k3s")
+docker:     "no"    #Use docker instead of containerd
+no-flannel: "no"    #Disable embedded flannel
+cluster-secret :    #Shared secret used to bootstrap a cluster [$K3S_CLUSTER_SECRET]
+node-name :         #Node name [$K3S_NODE_NAME]
+node-ip:            #IP address to advertise for node
+EOF
+    fi
+
+
     info systemd: Creating /etc/systemd/system/k3s.service
-    $SUDO tee /etc/systemd/system/k3s.service >/dev/null << "EOF"
+    $SUDO tee /etc/systemd/system/k3s.service >/dev/null <<EOF
 [Unit]
 Description=Lightweight Kubernetes
 Documentation=https://k3s.io
@@ -141,7 +173,7 @@ After=network.target
 [Service]
 ExecStartPre=-/sbin/modprobe br_netfilter
 ExecStartPre=-/sbin/modprobe overlay
-ExecStart=/usr/local/bin/k3s agent --server https://3.14.15.9:6443 --token K10669b9d21f2f6a6b2ce8588d4b40c1bff9fd893f51de84ea45d83637362e9280a::node:89c47074a57e171f7ca5fdf64a50eb56
+ExecStartPre=source /usr/local/bin/k3s-starup $1
 KillMode=process
 Delegate=yes
 LimitNOFILE=infinity
@@ -156,7 +188,7 @@ EOF
     info systemd: Enabling k3s unit
     $SUDO systemctl enable k3s.service >/dev/null
     $SUDO systemctl daemon-reload >/dev/null
-
+systemctl status k3s.service
     info systemd: Starting k3s
     $SUDO systemctl start k3s.service
 else

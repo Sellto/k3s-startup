@@ -1,0 +1,8 @@
+token:              #Token to use for authentication []
+server:             #Server to connect to []
+data-dir:           #Folder to hold state (default: "/var/lib/rancher/k3s")
+docker:     "no"    #Use docker instead of containerd
+no-flannel: "no"    #Disable embedded flannel
+cluster-secret :    #Shared secret used to bootstrap a cluster []
+node-name :         #Node name []
+node-ip:            #IP address to advertise for node
